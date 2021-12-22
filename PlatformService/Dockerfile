@@ -1,22 +1,21 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# Get base SDK Image from Microsoft
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build-env
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
 WORKDIR /app
-EXPOSE 80
-EXPOSE 443
+#EXPOSE 80
+#EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
-WORKDIR /src
-COPY ["./PlatformService.csproj", "PlatformService/"]
-RUN dotnet restore "PlatformService/PlatformService.csproj"
-COPY . .
-WORKDIR "/src/PlatformService"
-RUN dotnet build "PlatformService.csproj" -c Release -o /app/build
+# Copy the CSPROJ file and restore any dependencies (via NUGGET)
+COPY *.csproj ./
+RUN dotnet restore
 
-FROM build AS publish
-RUN dotnet publish "PlatformService.csproj" -c Release -o /app/publish
+# Copy the project files and build our release
+COPY . ./
+RUN dotnet publish -c release -o out
 
-FROM base AS final
+# Generate runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:5.0 
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build-env /app/out .
 ENTRYPOINT ["dotnet", "PlatformService.dll"]
+
