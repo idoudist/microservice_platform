@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using PlatformService.Data;
 using PlatformService.Repositories;
+using PlatformService.SyncDataServices.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,6 +39,9 @@ namespace PlatformService
             #endregion
             #region service and repo injection
             services.AddScoped<IPlatformRepo, PlatformRepo>();
+            #endregion
+            #region Http Client
+            services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
             #endregion
             services.AddControllers();
             services.AddSwaggerGen(c =>
