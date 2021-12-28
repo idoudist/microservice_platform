@@ -17,22 +17,34 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace PlatformService
-{
+{ 
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        public IConfiguration Configuration { get; }
+        private readonly IWebHostEnvironment _env;
+
+        public Startup(IConfiguration configuration, IWebHostEnvironment env)
         {
             Configuration = configuration;
+            _env = env;
         }
-
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             #region DbContext 
-            services.AddDbContext<AppDbContext>(opt =>
-            opt.UseInMemoryDatabase("InMem"));
+
+            if (_env.IsProduction())
+            {
+                Console.WriteLine("--> Using SqlServer Db");
+                services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("KubernetesConnection")));
+            } else
+            {
+                Console.WriteLine("--> Using InMem Db");
+                services.AddDbContext<AppDbContext>(opt =>
+                opt.UseInMemoryDatabase("InMem"));
+            }
+            
             #endregion
             #region Automapper
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -72,7 +84,7 @@ namespace PlatformService
             });
 
             #region for testing only
-            PrepDb.PrepPopulation(app);
+            PrepDb.PrepPopulation(app, _env.IsProduction());
             #endregion
         }
     }
