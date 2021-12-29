@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +12,11 @@ using Microsoft.OpenApi.Models;
 using PlatformService.AsyncDataServices;
 using PlatformService.Data;
 using PlatformService.Repositories;
+using PlatformService.SyncDataServices.Grpc;
 using PlatformService.SyncDataServices.Http;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -34,7 +37,6 @@ namespace PlatformService
         public void ConfigureServices(IServiceCollection services)
         {
             #region DbContext 
-
             if (_env.IsProduction())
             {
                 Console.WriteLine("--> Using SqlServer Db");
@@ -45,18 +47,25 @@ namespace PlatformService
                 services.AddDbContext<AppDbContext>(opt =>
                 opt.UseInMemoryDatabase("InMem"));
             }
-            
             #endregion
+
             #region Automapper
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
             #endregion
+
             #region service and repo injection
             services.AddScoped<IPlatformRepo, PlatformRepo>();
             services.AddSingleton<IMessageBusClient, MessageBusClient>();
             #endregion
+
+            #region Grpc settings
+            services.AddGrpc();
+            #endregion
+
             #region Http Client
             services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
             #endregion
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
@@ -83,6 +92,14 @@ namespace PlatformService
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                endpoints.MapGrpcService<GrpcPlatformService>();
+                //optional
+                //endpoit serve the protofile to the client
+                //to help understand the contract
+                endpoints.MapGet("/Protos/platforms.proto", async context =>
+                {
+                    await context.Response.WriteAsync(File.ReadAllText("/Protos/platforms.proto"));
+                });
             });
 
             #region for testing only

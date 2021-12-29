@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+option csharp_namespace = "PlatformService";
+
+//theese are the contracts between server and clients (server side)
+
+service GrpcPlatform {
+    //Procedure call
+	rpc GetAllPlatforms(GetAllRequest) returns (PlatformResponse);
+}
+
+//expecting this as an in put (empty object in this case)
+message GetAllRequest {}
+message GrpcPlatformModel {
+    // 1 is position number
+	int32 platformId = 1;
+	string name = 2;
+	string publisher = 3;
+}
+
+message PlatformResponse {
+    // repeated means a collection
+	repeated GrpcPlatformModel platform = 1;
+}
