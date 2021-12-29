@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using PlatformService.AsyncDataServices;
 using PlatformService.Data;
 using PlatformService.Repositories;
 using PlatformService.SyncDataServices.Http;
@@ -51,6 +52,7 @@ namespace PlatformService
             #endregion
             #region service and repo injection
             services.AddScoped<IPlatformRepo, PlatformRepo>();
+            services.AddSingleton<IMessageBusClient, MessageBusClient>();
             #endregion
             #region Http Client
             services.AddHttpClient<ICommandDataClient, HttpCommandDataClient>();
